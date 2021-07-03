@@ -19,7 +19,6 @@ package org.springframework.cloud.openfeign.ribbon;
 import com.netflix.loadbalancer.ILoadBalancer;
 import feign.Feign;
 import feign.Request;
-
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -43,19 +42,21 @@ import org.springframework.context.annotation.Primary;
  * @author Olga Maciaszek-Sharma
  * @author Nguyen Ky Thanh
  */
-@ConditionalOnClass({ ILoadBalancer.class, Feign.class })
+@ConditionalOnClass({ILoadBalancer.class, Feign.class})
 @ConditionalOnProperty(value = "spring.cloud.loadbalancer.ribbon.enabled",
-		matchIfMissing = true)
+	matchIfMissing = true)
 @Configuration(proxyBeanMethods = false)
+// 在 feign 自动配置之前
 @AutoConfigureBefore(FeignAutoConfiguration.class)
-@EnableConfigurationProperties({ FeignHttpClientProperties.class })
+@EnableConfigurationProperties({FeignHttpClientProperties.class})
 // Order is important here, last should be the default, first should be optional
 // see
 // https://github.com/spring-cloud/spring-cloud-netflix/issues/2086#issuecomment-316281653
-@Import({ HttpClientFeignLoadBalancedConfiguration.class,
-		OkHttpFeignLoadBalancedConfiguration.class,
-		HttpClient5FeignLoadBalancedConfiguration.class,
-		DefaultFeignLoadBalancedConfiguration.class })
+// 导入了4中不同的http调用方式，默认 DefaultFeignLoadBalancedConfiguration
+@Import({HttpClientFeignLoadBalancedConfiguration.class,
+	OkHttpFeignLoadBalancedConfiguration.class,
+	HttpClient5FeignLoadBalancedConfiguration.class,
+	DefaultFeignLoadBalancedConfiguration.class})
 public class FeignRibbonClientAutoConfiguration {
 
 	@Bean
@@ -63,7 +64,7 @@ public class FeignRibbonClientAutoConfiguration {
 	@ConditionalOnMissingBean
 	@ConditionalOnMissingClass("org.springframework.retry.support.RetryTemplate")
 	public CachingSpringLoadBalancerFactory cachingLBClientFactory(
-			SpringClientFactory factory) {
+		SpringClientFactory factory) {
 		return new CachingSpringLoadBalancerFactory(factory);
 	}
 
@@ -72,7 +73,7 @@ public class FeignRibbonClientAutoConfiguration {
 	@ConditionalOnMissingBean
 	@ConditionalOnClass(name = "org.springframework.retry.support.RetryTemplate")
 	public CachingSpringLoadBalancerFactory retryabeCachingLBClientFactory(
-			SpringClientFactory factory, LoadBalancedRetryFactory retryFactory) {
+		SpringClientFactory factory, LoadBalancedRetryFactory retryFactory) {
 		return new CachingSpringLoadBalancerFactory(factory, retryFactory);
 	}
 

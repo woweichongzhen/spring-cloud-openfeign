@@ -21,10 +21,11 @@ import feign.Target;
 import feign.hystrix.FallbackFactory;
 import feign.hystrix.HystrixFeign;
 import feign.hystrix.SetterFactory;
-
 import org.springframework.util.StringUtils;
 
 /**
+ * 生成 feign、hystrix 有关的 client 动态代理对象
+ *
  * @author Spencer Gibb
  * @author Erik Kringen
  */
@@ -33,68 +34,78 @@ class HystrixTargeter implements Targeter {
 
 	@Override
 	public <T> T target(FeignClientFactoryBean factory, Feign.Builder feign,
-			FeignContext context, Target.HardCodedTarget<T> target) {
+						FeignContext context, Target.HardCodedTarget<T> target) {
 		if (!(feign instanceof feign.hystrix.HystrixFeign.Builder)) {
 			return feign.target(target);
 		}
+
+		// 集成hystrix走到这里
 		feign.hystrix.HystrixFeign.Builder builder = (feign.hystrix.HystrixFeign.Builder) feign;
-		String name = StringUtils.isEmpty(factory.getContextId()) ? factory.getName()
-				: factory.getContextId();
-		SetterFactory setterFactory = getOptional(name, context, SetterFactory.class);
+
+		// 服务名称
+		String name = StringUtils.isEmpty(factory.getContextId())
+			? factory.getName() : factory.getContextId();
+
+		// HystrixCommand.Setter 有关的 Setter工厂
+		SetterFactory setterFactory = this.getOptional(name, context, SetterFactory.class);
 		if (setterFactory != null) {
 			builder.setterFactory(setterFactory);
 		}
+
+		//  降级类或降级工厂
 		Class<?> fallback = factory.getFallback();
 		if (fallback != void.class) {
-			return targetWithFallback(name, context, target, builder, fallback);
+			// 降级类走到这里
+			return this.targetWithFallback(name, context, target, builder, fallback);
 		}
 		Class<?> fallbackFactory = factory.getFallbackFactory();
 		if (fallbackFactory != void.class) {
 			return targetWithFallbackFactory(name, context, target, builder,
-					fallbackFactory);
+				fallbackFactory);
 		}
 
 		return feign.target(target);
 	}
 
 	private <T> T targetWithFallbackFactory(String feignClientName, FeignContext context,
-			Target.HardCodedTarget<T> target, HystrixFeign.Builder builder,
-			Class<?> fallbackFactoryClass) {
+											Target.HardCodedTarget<T> target, HystrixFeign.Builder builder,
+											Class<?> fallbackFactoryClass) {
 		FallbackFactory<? extends T> fallbackFactory = (FallbackFactory<? extends T>) getFromContext(
-				"fallbackFactory", feignClientName, context, fallbackFactoryClass,
-				FallbackFactory.class);
+			"fallbackFactory", feignClientName, context, fallbackFactoryClass,
+			FallbackFactory.class);
 		return builder.target(target, fallbackFactory);
 	}
 
 	private <T> T targetWithFallback(String feignClientName, FeignContext context,
-			Target.HardCodedTarget<T> target, HystrixFeign.Builder builder,
-			Class<?> fallback) {
+									 Target.HardCodedTarget<T> target, HystrixFeign.Builder builder,
+									 Class<?> fallback) {
+		// 获取降级类实例
 		T fallbackInstance = getFromContext("fallback", feignClientName, context,
-				fallback, target.type());
+			fallback, target.type());
 		return builder.target(target, fallbackInstance);
 	}
 
 	private <T> T getFromContext(String fallbackMechanism, String feignClientName,
-			FeignContext context, Class<?> beanType, Class<T> targetType) {
+								 FeignContext context, Class<?> beanType, Class<T> targetType) {
 		Object fallbackInstance = context.getInstance(feignClientName, beanType);
 		if (fallbackInstance == null) {
 			throw new IllegalStateException(String.format(
-					"No " + fallbackMechanism
-							+ " instance of type %s found for feign client %s",
-					beanType, feignClientName));
+				"No " + fallbackMechanism
+					+ " instance of type %s found for feign client %s",
+				beanType, feignClientName));
 		}
 
 		if (!targetType.isAssignableFrom(beanType)) {
 			throw new IllegalStateException(String.format("Incompatible "
 					+ fallbackMechanism
 					+ " instance. Fallback/fallbackFactory of type %s is not assignable to %s for feign client %s",
-					beanType, targetType, feignClientName));
+				beanType, targetType, feignClientName));
 		}
 		return (T) fallbackInstance;
 	}
 
 	private <T> T getOptional(String feignClientName, FeignContext context,
-			Class<T> beanType) {
+							  Class<T> beanType) {
 		return context.getInstance(feignClientName, beanType);
 	}
 

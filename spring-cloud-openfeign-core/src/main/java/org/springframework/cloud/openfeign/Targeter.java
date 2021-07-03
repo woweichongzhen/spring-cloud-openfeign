@@ -20,11 +20,13 @@ import feign.Feign;
 import feign.Target;
 
 /**
+ * 创建 client 的动态代理的 Targeter
+ *
  * @author Spencer Gibb
  */
 interface Targeter {
 
 	<T> T target(FeignClientFactoryBean factory, Feign.Builder feign,
-			FeignContext context, Target.HardCodedTarget<T> target);
+				 FeignContext context, Target.HardCodedTarget<T> target);
 
 }

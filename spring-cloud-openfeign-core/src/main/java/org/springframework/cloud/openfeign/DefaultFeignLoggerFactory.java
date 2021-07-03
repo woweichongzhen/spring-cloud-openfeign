@@ -20,11 +20,13 @@ import feign.Logger;
 import feign.slf4j.Slf4jLogger;
 
 /**
+ * 默认的 feign logger 工厂
+ *
  * @author Venil Noronha
  */
 public class DefaultFeignLoggerFactory implements FeignLoggerFactory {
 
-	private Logger logger;
+	private final Logger logger;
 
 	public DefaultFeignLoggerFactory(Logger logger) {
 		this.logger = logger;

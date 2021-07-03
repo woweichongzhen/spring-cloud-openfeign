@@ -19,6 +19,7 @@ package org.springframework.cloud.openfeign;
 import feign.Logger;
 
 /**
+ * 允许一个应用 创建自定义的 feign looger
  * Allows an application to use a custom Feign {@link Logger}.
  *
  * @author Venil Noronha
@@ -27,6 +28,7 @@ public interface FeignLoggerFactory {
 
 	/**
 	 * Factory method to provide a {@link Logger} for a given {@link Class}.
+	 *
 	 * @param type the {@link Class} for which a {@link Logger} instance is to be created
 	 * @return a {@link Logger} instance
 	 */

@@ -17,6 +17,7 @@
 package org.springframework.cloud.openfeign.clientconfig;
 
 /**
+ * 添加 不在 @FeignClient 中的配置
  * Additional Feign Client configuration that are not included in
  * {@link org.springframework.cloud.openfeign.FeignClient}.
  *
@@ -36,6 +37,7 @@ public interface FeignClientConfigurer {
 	 * <code>configuration()</code>. Will still use parent instance of
 	 * {@link feign.codec.Decoder}, {@link feign.codec.Encoder}, and
 	 * {@link feign.Contract} if none are provided.
+	 *
 	 * @return weather to inherit parent context for client configuration.
 	 */
 	default boolean inheritParentConfiguration() {
